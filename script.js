@@ -5,13 +5,13 @@ const face = document.getElementById("face");
 const leftArm = document.querySelector(".arm.left");
 const rightArm = document.querySelector(".arm.right");
 
-// Глаза моргают
+// Моргаем глазами каждые 2.5 секунды
 setInterval(() => {
   eyes.forEach(e => e.style.height = "6px");
   setTimeout(() => eyes.forEach(e => e.style.height = "42px"), 180);
 }, 2500);
 
-// Движения рук и головы
+// Движение рук и головы
 function gesture(yes = true) {
   rightArm.style.transform = "rotate(25deg)";
   leftArm.style.transform = "rotate(-15deg)";
@@ -23,7 +23,7 @@ function gesture(yes = true) {
   }, 500);
 }
 
-// Запрос к Worker
+// Функция запроса к Worker (ИИ)
 async function askAI(text) {
   try {
     const response = await fetch("https://still-leaf-6d93.damp-glade-283e.workers.dev", {
@@ -38,7 +38,7 @@ async function askAI(text) {
   }
 }
 
-// Показываем ответ на табличке и делаем жест
+// Показ ответа на табличке и жесты
 async function respond(text) {
   const answer = await askAI(text);
   card.textContent = answer;
