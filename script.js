@@ -5,13 +5,13 @@ const face = document.getElementById("face");
 const leftArm = document.querySelector(".arm.left");
 const rightArm = document.querySelector(".arm.right");
 
-// Глаза моргают каждые 2.5 секунды
+// Моргаем глазами каждые 2.5 секунды
 setInterval(() => {
   eyes.forEach(e => e.style.height = "6px");
   setTimeout(() => eyes.forEach(e => e.style.height = "42px"), 180);
 }, 2500);
 
-// Жесты рук и головы
+// Движения рук и головы
 function gesture(yes = true) {
   rightArm.style.transform = "rotate(25deg)";
   leftArm.style.transform = "rotate(-15deg)";
@@ -23,7 +23,7 @@ function gesture(yes = true) {
   }, 500);
 }
 
-// Отправка текста на Worker
+// Функция запроса к Worker (ИИ)
 async function askAI(text) {
   try {
     const response = await fetch("https://still-leaf-6d93.damp-glade-283e.workers.dev", {
@@ -31,14 +31,19 @@ async function askAI(text) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message: text })
     });
+
+    // Проверяем, пришёл ли корректный JSON
     const data = await response.json();
-    return data.answer;
+    if(data.answer) return data.answer;
+
+    // Если JSON без answer
+    return "Робот пока не знает, что сказать 💭";
   } catch {
-    return "Проблема с ИИ. Попробуй чуть позже 💥";
+    return "Ошибка связи с ИИ 💥";
   }
 }
 
-// Отображение ответа и жесты
+// Показываем ответ на табличке и двигаем робот
 async function respond(text) {
   const answer = await askAI(text);
   card.textContent = answer;
@@ -46,12 +51,13 @@ async function respond(text) {
   gesture(low.includes("да") || low.includes("хорошо"));
 }
 
-// Голосовой ввод
+// Обработка голосового ввода
 micBtn.onclick = () => {
   if (!("webkitSpeechRecognition" in window)) {
     card.textContent = "Голос не поддерживается 😢";
     return;
   }
+
   const recognition = new webkitSpeechRecognition();
   recognition.lang = "ru-RU";
   recognition.start();
