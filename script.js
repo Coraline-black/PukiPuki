@@ -1,126 +1,101 @@
-/**
- * Конфигурация робота
- */
-const CONFIG = {
-  API_URL: "https://still-leaf-6d93.damp-glade-283e.workers.dev",
-  LANG: "ru-RU",
-  BLINK_INTERVAL: 3000,
-  GESTURE_DURATION: 600
-};
-
-// Элементы DOM
 const UI = {
-  card: document.getElementById("card"),
-  micBtn: document.getElementById("micBtn"),
-  eyes: document.querySelectorAll(".eye"),
-  face: document.getElementById("face"),
-  arms: {
-    left: document.querySelector(".arm.left"),
-    right: document.querySelector(".arm.right")
-  }
-};
-
-/**
- * Живая анимация: Моргание
- */
-const startBlinking = () => {
-  setInterval(() => {
-    UI.eyes.forEach(eye => eye.style.height = "4px");
-    setTimeout(() => {
-      UI.eyes.forEach(eye => eye.style.height = "40px");
-    }, 150);
-  }, CONFIG.BLINK_INTERVAL);
-};
-
-/**
- * Анимация жестов
- * @param {boolean} isPositive - влияет на наклон головы
- */
-function playGesture(isPositive = true) {
-  const { left, right } = UI.arms;
-  
-  right.style.transform = "rotate(25deg)";
-  left.style.transform = "rotate(-15deg)";
-  UI.face.style.transform = isPositive ? "rotate(8deg)" : "rotate(-8deg)";
-
-  setTimeout(() => {
-    right.style.transform = "rotate(0deg)";
-    left.style.transform = "rotate(0deg)";
-    UI.face.style.transform = "rotate(0deg)";
-  }, CONFIG.GESTURE_DURATION);
-}
-
-/**
- * Запрос к ИИ (Worker)
- */
-async function fetchAIResponse(userText) {
-  try {
-    const response = await fetch(CONFIG.API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: userText })
-    });
-
-    if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-
-    const data = await response.json();
-    return data.answer || "Хм, не нахожу слов... 💭";
-  } catch (error) {
-    console.error("AI Fetch Error:", error);
-    return "Произошел сбой в моей нейронной сети 💥";
-  }
-}
-
-/**
- * Обработка диалога
- */
-async function handleUserCommand(text) {
-  UI.card.textContent = "Думаю...";
-  
-  const answer = await fetchAIResponse(text);
-  UI.card.textContent = answer;
-
-  const lowerAnswer = answer.toLowerCase();
-  const isPositive = ["да", "конечно", "хорошо", "окей"].some(word => lowerAnswer.includes(word));
-  
-  playGesture(isPositive);
-}
-
-/**
- * Инициализация голосового ввода
- */
-const initSpeechRecognition = () => {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-  if (!SpeechRecognition) {
-    UI.card.textContent = "Ваш браузер не поддерживает голос 😢";
-    return;
-  }
-
-  const recognition = new SpeechRecognition();
-  recognition.lang = CONFIG.LANG;
-  recognition.interimResults = false;
-
-  UI.micBtn.onclick = () => {
-    try {
-      recognition.start();
-      UI.card.textContent = "🎧 Слушаю вас...";
-    } catch (e) {
-      console.warn("Попытка повторного запуска распознавания");
+    card: document.getElementById("card"),
+    micBtn: document.getElementById("micBtn"),
+    eyes: document.querySelectorAll(".eye"),
+    face: document.getElementById("face"),
+    arms: {
+        left: document.querySelector(".arm.left"),
+        right: document.querySelector(".arm.right")
     }
-  };
-
-  recognition.onresult = (event) => {
-    const transcript = event.results[0][0].transcript;
-    handleUserCommand(transcript);
-  };
-
-  recognition.onerror = (err) => {
-    console.error("Speech Error:", err.error);
-    UI.card.textContent = "Не расслышал, повторите? 🎤";
-  };
 };
 
-// Запуск
-startBlinking();
-initSpeechRecognition();
+// 1. Анимация моргания (сделана более естественной)
+setInterval(() => {
+    UI.eyes.forEach(e => e.style.transform = "scaleY(0.1)");
+    setTimeout(() => {
+        UI.eyes.forEach(e => e.style.transform = "scaleY(1)");
+    }, 150);
+}, 3500);
+
+// 2. Улучшенная функция жестов
+function playGesture(type = 'neutral') {
+    const { left, right } = UI.arms;
+    
+    if (type === 'happy') {
+        right.style.transform = "rotate(30deg) translateY(-10px)";
+        left.style.transform = "rotate(-30deg) translateY(-10px)";
+        UI.face.style.transform = "translateY(-5px) rotate(5deg)";
+    } else {
+        right.style.transform = "rotate(15deg)";
+        left.style.transform = "rotate(-15deg)";
+    }
+
+    setTimeout(() => {
+        right.style.transform = "rotate(0deg)";
+        left.style.transform = "rotate(0deg)";
+        UI.face.style.transform = "rotate(0deg) translateY(0)";
+    }, 600);
+}
+
+// 3. Запрос к ИИ с обработкой ошибок
+async function askAI(text) {
+    try {
+        const response = await fetch("https://still-leaf-6d93.damp-glade-283e.workers.dev", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: text })
+        });
+
+        if (!response.ok) throw new Error("Worker Error");
+
+        const data = await response.json();
+        return data.answer || "Я задумался и забыл ответ... 💭";
+    } catch (err) {
+        console.error("Ошибка API:", err);
+        return "Не могу связаться с мозговым центром 💥";
+    }
+}
+
+// 4. Логика ответа
+async function respond(text) {
+    UI.card.textContent = "🤖 Думаю...";
+    const answer = await askAI(text);
+    UI.card.textContent = answer;
+
+    const low = answer.toLowerCase();
+    const isHappy = ["да", "хорошо", "привет", "рад"].some(word => low.includes(word));
+    playGesture(isHappy ? 'happy' : 'neutral');
+}
+
+// 5. Голосовой ввод (исправлен запуск)
+UI.micBtn.onclick = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+        UI.card.textContent = "Ваш браузер не поддерживает голос 😢";
+        return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "ru-RU";
+    
+    recognition.onstart = () => {
+        UI.card.textContent = "🎧 Слушаю вас...";
+        UI.micBtn.classList.add("active"); // Можно добавить стиль пульсации в CSS
+    };
+
+    recognition.onresult = (event) => {
+        const text = event.results[0][0].transcript;
+        respond(text);
+    };
+
+    recognition.onerror = () => {
+        UI.card.textContent = "Я вас не расслышал...";
+    };
+
+    recognition.onend = () => {
+        UI.micBtn.classList.remove("active");
+    };
+
+    recognition.start();
+};
