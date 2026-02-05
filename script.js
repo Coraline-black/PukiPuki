@@ -1,103 +1,57 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // Получаем элементы
     const card = document.getElementById("card");
     const micBtn = document.getElementById("micBtn");
     const robot = document.getElementById("robot");
-    const textInput = document.getElementById("textInput");
-    const sendBtn = document.getElementById("sendBtn");
 
-    // ТВОЙ URL (проверен из переписки)
     const WORKER_URL = "https://pukipuki.damp-glade-283e.workers.dev/";
 
-    // Управление эмоциями
     function setGesture(type) {
-        robot.className = ""; // Сброс классов
+        robot.className = "";
         if (type) robot.classList.add(type);
     }
 
-    // ГЛАВНАЯ ФУНКЦИЯ ОБЩЕНИЯ
     async function askPukiPuki(text) {
-        if (!text) return;
-
-        // 1. Показываем, что думаем
         setGesture("thinking");
-        card.textContent = "Связываюсь с космосом... 💭";
-
+        card.textContent = "Думаю... 💭";
+        
         try {
-            // 2. Отправляем запрос на Worker
             const response = await fetch(WORKER_URL, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ message: text }),
             });
 
-            if (!response.ok) throw new Error("Ошибка сервера");
-
             const data = await response.json();
-
-            // 3. Получили ответ!
+            
+            // ПРОВЕРКА: Если сервер прислал ответ, пишем его. 
+            // Если сервер молчит, пишем ошибку.
             if (data && data.answer) {
-                setGesture("happy"); // Улыбаемся
-                card.textContent = data.answer; // ВЫВОДИМ ОТВЕТ НЕЙРОСЕТИ
+                setGesture("happy");
+                card.textContent = data.answer; // ЗДЕСЬ БУДЕТ НАСТОЯЩИЙ ОТВЕТ
             } else {
-                throw new Error("Пустой ответ");
+                card.textContent = "Я получил пустой ответ от мозга... 🧠";
             }
 
-            // Через 5 секунд обычное лицо
             setTimeout(() => setGesture(""), 5000);
 
         } catch (error) {
-            console.error(error);
-            setGesture("error"); // Красные глаза
-            card.textContent = "Ошибка связи! Проверь Worker. 📡";
+            setGesture("error");
+            card.textContent = "Ошибка связи! Проверь интернет или Worker. 📡";
         }
     }
 
-    // НАСТРОЙКА ГОЛОСА
     const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
-
     if (Speech) {
         const recognition = new Speech();
         recognition.lang = "ru-RU";
-        recognition.interimResults = false;
 
-        // Нажатие на кнопку
-        micBtn.addEventListener("click", () => {
-            try {
-                recognition.start();
-                micBtn.textContent = "🔴 СЛУШАЮ...";
-                card.textContent = "Говори...";
-            } catch (e) {
-                console.log("Уже запущено");
-            }
-        });
+        micBtn.onclick = () => recognition.start();
 
-        // Когда перестал слушать, возвращаем кнопку
-        recognition.onend = () => {
-            micBtn.textContent = "🎤 ГОВОРИТЬ";
-        };
-
-        // Когда распознал речь
         recognition.onresult = (event) => {
             const transcript = event.results[0][0].transcript;
-            card.textContent = "Ты: " + transcript;
-            // СРАЗУ ОТПРАВЛЯЕМ В НЕЙРОСЕТЬ
             askPukiPuki(transcript);
         };
-
-        recognition.onerror = () => {
-            setGesture("error");
-            card.textContent = "Не расслышал. Попробуй еще раз.";
-            micBtn.textContent = "🎤 ГОВОРИТЬ";
-        };
-    } else {
-        card.textContent = "Браузер не поддерживает голос. Используй Chrome.";
-        micBtn.style.display = "none";
+        
+        recognition.onstart = () => { card.textContent = "Слушаю... 👂"; };
     }
-
-    // Ввод текстом (резервный вариант)
-    sendBtn.addEventListener("click", () => {
-        askPukiPuki(textInput.value.trim());
-        textInput.value = "";
-    });
 });
