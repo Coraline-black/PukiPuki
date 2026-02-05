@@ -1,34 +1,58 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const card = document.getElementById("card");
-  const input = document.getElementById("textInput");
-  const btn = document.getElementById("sendBtn");
+    const card = document.getElementById("card");
+    const micBtn = document.getElementById("micBtn");
 
-  const WORKER_URL = "https://still-leaf-6d93.damp-glade-283e.workers.dev";
+    async function askPukiPuki(text) {
+        // Добавил / в конце ссылки, теперь она идеальна
+        const WORKER_URL = "https://pukipuki.damp-glade-283e.workers.dev/";
 
-  async function askAI(text) {
-    try {
-      const res = await fetch(WORKER_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text })
-      });
+        try {
+            const response = await fetch(WORKER_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: text }),
+            });
 
-      const data = await res.json();
-      return data.answer || "Пустой ответ 😶";
+            if (!response.ok) throw new Error("Ошибка сети");
 
-    } catch (e) {
-      return "Ошибка связи с ИИ 💥";
+            const data = await response.json();
+            return data.answer; 
+
+        } catch (error) {
+            console.error("Ошибка:", error);
+            return "Ой! Связь прервалась. Проверь настройки воркера 📡";
+        }
     }
-  }
 
-  btn.onclick = async () => {
-    const text = input.value.trim();
-    if (!text) return;
+    if (micBtn) {
+        micBtn.addEventListener("click", () => {
+            const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
+            if (!Recognition) {
+                card.textContent = "Твой браузер не поддерживает голос. Попробуй Chrome!";
+                return;
+            }
 
-    card.textContent = "PukiPuki думает… 🤔";
-    input.value = "";
+            const recognition = new Recognition();
+            recognition.lang = "ru-RU";
 
-    const answer = await askAI(text);
-    card.textContent = answer;
-  };
+            recognition.onstart = () => {
+                card.textContent = "Слушаю тебя... 👂";
+            };
+
+            recognition.onresult = async (event) => {
+                const transcript = event.results[0][0].transcript;
+                card.textContent = "Думаю... 💭";
+
+                const aiResponse = await askPukiPuki(transcript);
+                card.textContent = aiResponse;
+            };
+
+            recognition.onerror = () => {
+                card.textContent = "Я не расслышал, повтори? ✨";
+            };
+
+            recognition.start();
+        });
+    }
 });
