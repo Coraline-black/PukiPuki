@@ -1,27 +1,30 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PukiPuki</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PukiPuki AI Robot</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div id="robot">
-  <div id="face">
-    <div class="eye left"></div>
-    <div class="eye right"></div>
-    <div class="smile"></div>
-  </div>
+    <div id="face">
+        <div id="eye-left" class="eye"></div>
+        <div id="eye-right" class="eye"></div>
+        <div id="smile" class="smile"></div>
+    </div>
 </div>
 
-<div id="card">Нажми на микрофон и говори! 🎤</div>
+<div id="card">Нажми на микрофон и начни говорить 🎤</div>
 
-<input id="textInput" placeholder="Напиши здесь..." />
-<button id="sendBtn">Отправить</button>
-
-<button id="micBtn" style="font-size: 24px; margin-top: 10px;">🎤 Говорить</button>
+<div class="controls">
+    <button id="micBtn">🎤 ГОВОРИТЬ</button>
+    <div class="input-fallback">
+        <input id="textInput" placeholder="Или напиши..." />
+        <button id="sendBtn">➤</button>
+    </div>
+</div>
 
 <script src="script.js"></script>
 </body>
