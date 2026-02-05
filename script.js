@@ -1,70 +1,85 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const card = document.getElementById("card");
-    const micBtn = document.getElementById("micBtn");
-    const robot = document.getElementById("robot");
+const card = document.getElementById("card");
+const head = document.getElementById("head");
+const eyes = document.querySelectorAll(".eye");
+const leftArm = document.querySelector(".arm.left");
+const rightArm = document.querySelector(".arm.right");
+const talkBtn = document.getElementById("talkBtn");
 
-    // Твой адрес воркера
-    const WORKER_URL = "https://pukipuki.damp-glade-283e.workers.dev/";
+// Моргаем глазами каждые 2.6 сек
+setInterval(() => {
+  eyes.forEach(e => e.style.height = "6px");
+  setTimeout(() => eyes.forEach(e => e.style.height = "42px"), 180);
+}, 2600);
 
-    function setGesture(type) {
-        robot.className = "";
-        if (type) robot.classList.add(type);
+// Жесты
+function yes() {
+  head.style.transform = "rotate(6deg)";
+  rightArm.style.transform = "rotate(25deg)";
+  leftArm.style.transform = "rotate(-15deg)";
+  setTimeout(() => {
+    head.style.transform = "rotate(0deg)";
+    rightArm.style.transform = "rotate(0deg)";
+    leftArm.style.transform = "rotate(0deg)";
+  }, 500);
+}
+
+function no() {
+  head.style.transform = "rotate(-6deg)";
+  rightArm.style.transform = "rotate(25deg)";
+  leftArm.style.transform = "rotate(-15deg)";
+  setTimeout(() => {
+    head.style.transform = "rotate(0deg)";
+    rightArm.style.transform = "rotate(0deg)";
+    leftArm.style.transform = "rotate(0deg)";
+  }, 500);
+}
+
+// Память робота
+let memory = JSON.parse(localStorage.getItem("robotMemory") || "{}");
+function saveMemory() {
+  localStorage.setItem("robotMemory", JSON.stringify(memory));
+}
+
+// Логика ИИ
+function think(text) {
+  text = text.toLowerCase();
+
+  // Примеры: 2+2
+  if(/\d+\s*[\+\-\*\/]\s*\d+/.test(text)) {
+    try {
+      const answer = eval(text);
+      card.textContent = `Ответ: ${answer}`;
+      yes();
+      return;
+    } catch(e) {
+      card.textContent = "Ошибка в примере 😅";
+      no();
+      return;
     }
+  }
 
-    async function askPukiPuki(text) {
-        if (!text) return;
-        
-        setGesture("thinking");
-        card.textContent = "Пуки-Пуки анализирует... 💭";
-        
-        try {
-            const response = await fetch(WORKER_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: text }),
-            });
+  // Если есть в памяти
+  if(memory[text]) {
+    card.textContent = memory[text];
+    memory[text].toLowerCase().includes("нет") ? no() : yes();
+    return;
+  }
 
-            if (!response.ok) throw new Error("Ошибка сервера");
+  // Если нет — спрашиваем у пользователя
+  const answer = prompt(`Я не знаю, что ответить на "${text}". Что мне сказать?`);
+  if(answer) {
+    memory[text] = answer;
+    saveMemory();
+    card.textContent = answer;
+    answer.toLowerCase().includes("нет") ? no() : yes();
+  } else {
+    card.textContent = "Я пока не знаю 🤔";
+    no();
+  }
+}
 
-            const data = await response.json();
-            
-            // ВАЖНО: Выводим ТОЛЬКО то, что прислал ИИ
-            if (data && data.answer) {
-                setGesture("happy");
-                card.textContent = data.answer; 
-            } else {
-                card.textContent = "Я получил странный ответ от нейросети... 🤔";
-            }
-
-            setTimeout(() => setGesture(""), 5000);
-
-        } catch (error) {
-            setGesture("error");
-            card.textContent = "Ошибка связи! Проверь Cloudflare Worker. 📡";
-            console.error(error);
-        }
-    }
-
-    const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (Speech) {
-        const recognition = new Speech();
-        recognition.lang = "ru-RU";
-
-        micBtn.onclick = () => {
-            recognition.start();
-            card.textContent = "Слушаю... 👂";
-        };
-
-        recognition.onresult = (event) => {
-            const transcript = event.results[0][0].transcript;
-            askPukiPuki(transcript);
-        };
-
-        recognition.onerror = () => {
-            setGesture("error");
-            card.textContent = "Я не расслышала. Повторишь? ✨";
-        };
-    } else {
-        card.textContent = "Голосовой ввод не поддерживается в этом браузере.";
-    }
-});
+// Кнопка общения
+talkBtn.onclick = () => {
+  const input = prompt("Напиши или скажи что-нибудь для робота:");
+  if(input) think(input);
+};
