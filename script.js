@@ -1,12 +1,3 @@
-/**
- * Настройки робота PukiPuki
- */
-const CONFIG = {
-  // Твой актуальный URL воркера
-  API_URL: "https://pukipuki.damp-glade-283e.workers.dev/",
-  LANG: "ru-RU"
-};
-
 const UI = {
   card: document.getElementById("card"),
   micBtn: document.getElementById("micBtn"),
@@ -16,7 +7,7 @@ const UI = {
   rightArm: document.querySelector(".arm.right")
 };
 
-// --- 1. Анимация моргания ---
+// --- Анимация моргания ---
 setInterval(() => {
   UI.eyes.forEach(e => e.style.height = "2px");
   setTimeout(() => {
@@ -24,84 +15,78 @@ setInterval(() => {
   }, 150);
 }, 3500);
 
-// --- 2. Функция движений ---
+// --- Функция жестов ---
 function playGesture(isHappy = true) {
-  // Наклоняем голову и поднимаем руки
-  UI.face.style.transform = isHappy ? "rotate(10deg) translateY(-5px)" : "rotate(-10deg)";
-  UI.rightArm.style.transform = "rotate(35deg)";
-  UI.leftArm.style.transform = "rotate(-35deg)";
+  UI.face.style.transform = isHappy ? "rotate(8deg) translateY(-5px)" : "rotate(-8deg)";
+  UI.rightArm.style.transform = "rotate(30deg)";
+  UI.leftArm.style.transform = "rotate(-30deg)";
   
-  // Возвращаем в исходное состояние через 800мс
   setTimeout(() => {
     UI.face.style.transform = "rotate(0deg) translateY(0)";
     UI.rightArm.style.transform = "rotate(0deg)";
     UI.leftArm.style.transform = "rotate(0deg)";
-  }, 800);
+  }, 700);
 }
 
-// --- 3. Запрос к твоему воркеру ---
+// --- Запрос к ИИ ---
 async function askAI(text) {
   try {
-    const response = await fetch(CONFIG.API_URL, {
+    const response = await fetch("https://pukipuki.damp-glade-283e.workers.dev/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message: text })
     });
 
-    if (!response.ok) throw new Error("Server error");
+    if (!response.ok) throw new Error("Ошибка сервера");
 
     const data = await response.json();
-    return data.answer || "Я задумался... 💭";
+    return data.answer || "Я задумался... Повтори еще раз? 💭";
   } catch (err) {
-    console.error("Fetch error:", err);
-    return "Связь прервана. Проверь консоль! 💥";
+    console.error("Ошибка API:", err);
+    return "Не могу связаться с мозговым центром 💥";
   }
 }
 
-// --- 4. Обработка ответа ---
+// --- Логика ответа ---
 async function respond(text) {
   UI.card.textContent = "🤖 Думаю...";
-  
   const answer = await askAI(text);
   UI.card.textContent = answer;
 
-  // Радуемся, если ответ содержит позитив
-  const lowerAnswer = answer.toLowerCase();
-  const isPositive = ["привет", "рад", "да", "хорошо"].some(word => lowerAnswer.includes(word));
-  playGesture(isPositive);
+  const low = answer.toLowerCase();
+  const isHappy = ["да", "хорошо", "привет", "рад", "отлично"].some(word => low.includes(word));
+  playGesture(isHappy);
 }
 
-// --- 5. Голосовой ввод ---
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+// --- Голосовой ввод ---
+UI.micBtn.onclick = () => {
+  const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+  
+  if (!Speech) {
+    UI.card.textContent = "Браузер не поддерживает голос 😢";
+    return;
+  }
 
-if (!SpeechRecognition) {
-  UI.card.textContent = "Голос не поддерживается в этом браузере 😢";
-} else {
-  const recognition = new SpeechRecognition();
-  recognition.lang = CONFIG.LANG;
-
-  UI.micBtn.onclick = () => {
-    try {
-      recognition.start();
-      UI.card.textContent = "🎧 Слушаю вас...";
-      UI.micBtn.style.boxShadow = "0 0 20px #ff5fa2";
-    } catch (e) {
-      console.log("Распознавание уже запущено");
-    }
+  const recognition = new Speech();
+  recognition.lang = "ru-RU";
+  
+  recognition.onstart = () => {
+    UI.card.textContent = "🎧 Слушаю...";
+    UI.micBtn.classList.add("recording");
   };
 
   recognition.onresult = (event) => {
-    UI.micBtn.style.boxShadow = "none";
     const transcript = event.results[0][0].transcript;
     respond(transcript);
   };
 
   recognition.onerror = () => {
-    UI.micBtn.style.boxShadow = "none";
     UI.card.textContent = "Я вас не расслышал... 🎤";
   };
-  
+
   recognition.onend = () => {
-    UI.micBtn.style.boxShadow = "none";
+    UI.micBtn.classList.remove("recording");
   };
-}
+
+  recognition.start();
+};
