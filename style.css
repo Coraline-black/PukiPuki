@@ -1,78 +1,101 @@
-const card = document.getElementById("card");
-const head = document.getElementById("head");
-const eyes = document.querySelectorAll(".eye");
-const leftArm = document.querySelector(".arm.left");
-const rightArm = document.querySelector(".arm.right");
-const talkBtn = document.getElementById("talkBtn");
-
-/* Моргание */
-setInterval(() => {
-  eyes.forEach(e => e.style.height = "6px");
-  setTimeout(() => eyes.forEach(e => e.style.height = "42px"), 180);
-}, 2600);
-
-/* Жесты */
-function yes() {
-  head.style.transform = "rotate(6deg)";
-  arms();
-}
-function no() {
-  head.style.transform = "rotate(-6deg)";
-  arms();
-}
-function arms() {
-  rightArm.style.transform = "rotate(25deg)";
-  leftArm.style.transform = "rotate(-15deg)";
-  setTimeout(() => {
-    head.style.transform = "rotate(0deg)";
-    rightArm.style.transform = "rotate(0deg)";
-    leftArm.style.transform = "rotate(0deg)";
-  }, 500);
+body {
+  margin: 0;
+  height: 100vh;
+  background: radial-gradient(circle at top, #1b1028, #050009);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: Arial, sans-serif;
+  color: white;
 }
 
-/* УМНЫЕ ОТВЕТЫ */
-function think(text) {
-  text = text.toLowerCase();
-
-  if (text.includes("+")) {
-    const parts = text.split("+").map(n => parseInt(n));
-    const res = parts[0] + parts[1];
-    card.textContent = `Ответ: ${res}`;
-    yes();
-    return;
-  }
-
-  if (text.includes("привет")) {
-    card.textContent = "Привет! Я рад тебе 🤍";
-    yes(); return;
-  }
-
-  if (text.includes("ты мой друг")) {
-    card.textContent = "Конечно. Я всегда рядом 💜";
-    yes(); return;
-  }
-
-  if (text.includes("ты любишь меня")) {
-    card.textContent = "Я очень люблю быть с тобой ✨";
-    yes(); return;
-  }
-
-  if (text.includes("да")) {
-    card.textContent = "Хорошо!";
-    yes(); return;
-  }
-
-  if (text.includes("нет")) {
-    card.textContent = "Я понял.";
-    no(); return;
-  }
-
-  card.textContent = "Я думаю… ты хороший человек 🤍";
-  yes();
+#robot {
+  position: relative;
+  width: 220px;
 }
 
-/* КНОПКА — РАБОТАЕТ ВЕЗДЕ */
-talkBtn.onclick = () => {
-  const q = prompt("Напиши или скажи мне что-нибудь 💬");
-  if (q) think(q);
-};
+#head {
+  width: 180px;
+  height: 180px;
+  background: #12081f;
+  border-radius: 50%;
+  position: relative;
+  box-shadow: 0 0 40px rgba(200,160,255,0.3);
+  transition: transform 0.4s;
+}
+
+/* ГЛАЗА — нежно-светло-фиолетовые */
+.eye {
+  width: 42px;
+  height: 42px;
+  background: radial-gradient(circle, #f4ecff, #cdb6ff);
+  border-radius: 50%;
+  position: absolute;
+  top: 55px;
+  box-shadow: 0 0 18px rgba(210,170,255,0.9);
+  transition: height 0.15s;
+}
+
+.eye.left { left: 40px; }
+.eye.right { right: 40px; }
+
+.eye::after {
+  content: "";
+  width: 10px;
+  height: 10px;
+  background: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 6px;
+  left: 7px;
+}
+
+/* УЛЫБКА */
+.mouth {
+  width: 70px;
+  height: 35px;
+  border-bottom: 4px solid #e0cfff;
+  border-radius: 0 0 60px 60px;
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* РУКИ */
+.arm {
+  width: 20px;
+  height: 80px;
+  background: #12081f;
+  position: absolute;
+  top: 120px;
+  border-radius: 20px;
+  transform-origin: top center;
+  transition: transform 0.3s;
+}
+.arm.left { left: -20px; }
+.arm.right { right: -20px; }
+
+/* ТАБЛИЧКА */
+#card {
+  margin-top: 28px;
+  padding: 14px 20px;
+  background: rgba(50,25,80,0.9);
+  border-radius: 16px;
+  box-shadow: 0 0 20px rgba(200,160,255,0.35);
+  min-height: 48px;
+  text-align: center;
+  font-weight: bold;
+}
+
+/* КНОПКА */
+button {
+  margin-top: 14px;
+  padding: 10px 22px;
+  background: linear-gradient(135deg, #cdb6ff, #a88cff);
+  border: none;
+  border-radius: 30px;
+  color: white;
+  font-size: 16px;
+}
