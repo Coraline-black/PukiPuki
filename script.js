@@ -3,11 +3,12 @@ const UI = {
   micBtn: document.getElementById("micBtn"),
   eyes: document.querySelectorAll(".eye"),
   face: document.getElementById("face"),
+  // Исправленный выбор рук для твоей структуры
   leftArm: document.querySelector(".arm.left"),
   rightArm: document.querySelector(".arm.right")
 };
 
-// --- Анимация моргания ---
+// 1. Анимация моргания
 setInterval(() => {
   UI.eyes.forEach(e => e.style.height = "2px");
   setTimeout(() => {
@@ -15,20 +16,20 @@ setInterval(() => {
   }, 150);
 }, 3500);
 
-// --- Функция жестов ---
+// 2. Функция жестов
 function playGesture(isHappy = true) {
-  UI.face.style.transform = isHappy ? "rotate(8deg) translateY(-5px)" : "rotate(-8deg)";
-  UI.rightArm.style.transform = "rotate(30deg)";
-  UI.leftArm.style.transform = "rotate(-30deg)";
+  if(UI.face) UI.face.style.transform = isHappy ? "rotate(8deg) translateY(-5px)" : "rotate(-8deg)";
+  if(UI.rightArm) UI.rightArm.style.transform = "rotate(30deg)";
+  if(UI.leftArm) UI.leftArm.style.transform = "rotate(-30deg)";
   
   setTimeout(() => {
-    UI.face.style.transform = "rotate(0deg) translateY(0)";
-    UI.rightArm.style.transform = "rotate(0deg)";
-    UI.leftArm.style.transform = "rotate(0deg)";
+    if(UI.face) UI.face.style.transform = "rotate(0deg) translateY(0)";
+    if(UI.rightArm) UI.rightArm.style.transform = "rotate(0deg)";
+    if(UI.leftArm) UI.leftArm.style.transform = "rotate(0deg)";
   }, 700);
 }
 
-// --- Запрос к ИИ ---
+// 3. Запрос к ИИ (Твой воркер)
 async function askAI(text) {
   try {
     const response = await fetch("https://pukipuki.damp-glade-283e.workers.dev/", {
@@ -37,28 +38,28 @@ async function askAI(text) {
       body: JSON.stringify({ message: text })
     });
 
-    if (!response.ok) throw new Error("Ошибка сервера");
+    if (!response.ok) throw new Error("Worker Offline");
 
     const data = await response.json();
-    return data.answer || "Я задумался... Повтори еще раз? 💭";
+    return data.answer || "Я задумался... Повтори? 💭";
   } catch (err) {
-    console.error("Ошибка API:", err);
-    return "Не могу связаться с мозговым центром 💥";
+    console.error("Ошибка:", err);
+    return "Связь с PukiPuki прервана 💥 (Проверь CORS в воркере)";
   }
 }
 
-// --- Логика ответа ---
+// 4. Логика диалога
 async function respond(text) {
   UI.card.textContent = "🤖 Думаю...";
   const answer = await askAI(text);
   UI.card.textContent = answer;
 
   const low = answer.toLowerCase();
-  const isHappy = ["да", "хорошо", "привет", "рад", "отлично"].some(word => low.includes(word));
+  const isHappy = ["привет", "рад", "да", "хорошо"].some(word => low.includes(word));
   playGesture(isHappy);
 }
 
-// --- Голосовой ввод ---
+// 5. Голосовой ввод
 UI.micBtn.onclick = () => {
   const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
   
@@ -78,10 +79,6 @@ UI.micBtn.onclick = () => {
   recognition.onresult = (event) => {
     const transcript = event.results[0][0].transcript;
     respond(transcript);
-  };
-
-  recognition.onerror = () => {
-    UI.card.textContent = "Я вас не расслышал... 🎤";
   };
 
   recognition.onend = () => {
