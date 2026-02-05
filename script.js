@@ -1,3 +1,4 @@
+// Элементы на странице
 const card = document.getElementById("card");
 const head = document.getElementById("head");
 const eyes = document.querySelectorAll(".eye");
@@ -5,13 +6,13 @@ const leftArm = document.querySelector(".arm.left");
 const rightArm = document.querySelector(".arm.right");
 const talkBtn = document.getElementById("talkBtn");
 
-// --- Моргание глаз ---
+// --- Моргание глаз каждые 2.5 секунды ---
 setInterval(() => {
   eyes.forEach(e => e.style.height = "6px");
   setTimeout(() => eyes.forEach(e => e.style.height = "42px"), 180);
 }, 2500);
 
-// --- Жесты робота ---
+// --- Жесты: кивает "да" ---
 function yes() {
   head.style.transform = "rotate(6deg)";
   rightArm.style.transform = "rotate(25deg)";
@@ -23,6 +24,7 @@ function yes() {
   }, 500);
 }
 
+// --- Жесты: мотает "нет" ---
 function no() {
   head.style.transform = "rotate(-6deg)";
   rightArm.style.transform = "rotate(25deg)";
@@ -47,10 +49,10 @@ function saveMemory() {
   localStorage.setItem("robotMemory", JSON.stringify(memory));
 }
 
-// --- Облачный ИИ (через Worker) ---
+// --- Облачный ИИ через твой Worker ---
 async function askCloudAI(text) {
   try {
-    const response = await fetch("https://still-leaf-6d93.damp-glade-283e.workers.dev", {
+    const response = await fetch("https://pukipuki.damp-glade-283e.workers.dev/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message: text })
@@ -62,7 +64,7 @@ async function askCloudAI(text) {
   }
 }
 
-// --- Основная логика ИИ ---
+// --- Основная логика ответа ---
 async function respondAI(text) {
   text = text.toLowerCase();
 
