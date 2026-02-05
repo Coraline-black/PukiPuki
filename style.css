@@ -10,22 +10,17 @@ body {
   color: white;
 }
 
-/* Стекло */
-#glass {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  backdrop-filter: blur(4px);
-  background: rgba(255,255,255,0.05);
-  pointer-events: none;
-}
-
 /* Робот */
-#robot { width: 260px; text-align: center; position: relative; }
+#robot { 
+  width: 260px; 
+  text-align: center; 
+  position: relative; 
+}
 
 /* Голова */
 #head {
-  width: 190px; height: 190px;
+  width: 190px; 
+  height: 190px;
   background: #140610;
   border-radius: 50% 50% 55% 55%;
   margin: 0 auto;
@@ -35,14 +30,16 @@ body {
   animation: breathe 3s infinite;
 }
 
-/* Моргаем глаза */
+/* Глаза — нежно-светло-фиолетовые */
 .eye {
-  width: 44px; height: 44px;
-  background: radial-gradient(circle, #d7b3ff, #a78fff); /* нежно-светло-фиолетовый */
+  width: 44px; 
+  height: 44px;
+  background: radial-gradient(circle, #d7b3ff, #a78fff);
   border-radius: 50%;
+  border: 2px solid #fff; /* чёткая граница */
   position: absolute;
   top: 55px;
-  box-shadow: 0 0 14px rgba(255,150,200,0.9);
+  box-shadow: 0 0 8px rgba(255,150,200,0.7);
   transition: height 0.15s;
 }
 .eye.left { left: 45px; }
@@ -51,7 +48,8 @@ body {
 /* Блик в глазах */
 .eye::after {
   content: "";
-  width: 12px; height: 12px;
+  width: 12px; 
+  height: 12px;
   background: white;
   border-radius: 50%;
   position: absolute;
@@ -59,10 +57,11 @@ body {
   left: 7px;
 }
 
-/* Улыбка */
+/* Улыбка — светло-фиолетовая */
 .smile {
-  width: 90px; height: 45px;
-  border-bottom: 4px solid #d7b3ff; /* светло-фиолетовая улыбка */
+  width: 90px; 
+  height: 45px;
+  border-bottom: 4px solid #d7b3ff; /* цвет изменен */
   border-radius: 0 0 60px 60px;
   position: absolute;
   bottom: 35px;
@@ -72,7 +71,8 @@ body {
 
 /* Руки */
 .arm {
-  width: 22px; height: 75px;
+  width: 22px; 
+  height: 75px;
   background: #140610;
   position: absolute;
   top: 110px;
@@ -107,7 +107,7 @@ body {
 }
 #talkBtn:hover { opacity: 0.9; }
 
-/* Анимация дыхания */
+/* Анимация дыхания головы */
 @keyframes breathe {
   0%,100% { transform: scale(1); }
   50% { transform: scale(1.02); }
