@@ -7,14 +7,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const WORKER_URL = "https://pukipuki.damp-glade-283e.workers.dev/";
 
+    // Функция смены ЖЕСТОВ (эмоций)
     function setGesture(type) {
-        robot.className = ""; // сброс
+        robot.className = ""; // Сброс всех классов
         if (type) robot.classList.add(type);
     }
 
+    // Функция запроса к ИИ
     async function getAIResponse(message) {
+        if (!message) return;
+        
         setGesture("thinking");
-        card.textContent = "Пуки-Пуки думает...";
+        card.textContent = "Пуки-Пуки думает... 💭";
 
         try {
             const response = await fetch(WORKER_URL, {
@@ -23,56 +27,66 @@ document.addEventListener("DOMContentLoaded", () => {
                 body: JSON.stringify({ message: message })
             });
 
+            if (!response.ok) throw new Error();
+
             const data = await response.json();
             
             if (data.answer) {
-                setGesture("happy");
+                setGesture("happy"); // ЖЕСТ: Улыбка при ответе
                 card.textContent = data.answer;
-                setTimeout(() => setGesture(""), 4000);
+                // Через 5 секунд возвращаемся в обычное состояние
+                setTimeout(() => setGesture(""), 5000);
             }
         } catch (err) {
-            setGesture("error");
-            card.textContent = "Ошибка связи! Проверь воркер или интернет.";
+            setGesture("error"); // ЖЕСТ: Ошибка
+            card.textContent = "Упс! Ошибка связи с сервером. 📡";
         }
     }
 
-    // ГОЛОСОВОЕ УПРАВЛЕНИЕ
+    // РАБОТА С ГОЛОСОМ
     const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
     if (Speech) {
-        const rec = new Speech();
-        rec.lang = "ru-RU";
+        const recognition = new Speech();
+        recognition.lang = "ru-RU";
 
-        micBtn.onclick = () => {
-            try { rec.start(); } catch(e) { console.log("Уже запущено"); }
+        micBtn.addEventListener("click", () => {
+            try {
+                recognition.start();
+            } catch (e) {
+                console.log("Распознавание уже запущено");
+            }
+        });
+
+        recognition.onstart = () => {
+            card.textContent = "Слушаю тебя... 👂";
+            micBtn.textContent = "🔴 СЛУШАЮ...";
+            setGesture("thinking");
         };
 
-        rec.onstart = () => {
-            card.textContent = "Слушаю... 👂";
-            micBtn.style.background = "#ff4d4d";
-        };
-
-        rec.onresult = (event) => {
+        recognition.onresult = (event) => {
             const text = event.results[0][0].transcript;
             card.textContent = "Ты: " + text;
             getAIResponse(text);
         };
 
-        rec.onend = () => {
-            micBtn.style.background = "#007bff";
+        recognition.onend = () => {
+            micBtn.textContent = "🎤 ГОВОРИТЬ";
         };
 
-        rec.onerror = () => {
+        recognition.onerror = () => {
             setGesture("error");
-            card.textContent = "Я не расслышал. Нажми еще раз.";
+            card.textContent = "Я не расслышала. Повторишь? ✨";
         };
     } else {
-        card.textContent = "Голосовой ввод не поддерживается этим браузером.";
+        card.textContent = "Твой браузер не поддерживает голос. Используй Chrome.";
     }
 
-    // ТЕКСТОВЫЙ ВВОД
+    // РАБОТА С ТЕКСТОМ
     sendBtn.onclick = () => {
-        if (textInput.value.trim()) {
-            getAIResponse(textInput.value);
+        const val = textInput.value.trim();
+        if (val) {
+            getAIResponse(val);
             textInput.value = "";
         }
     };
