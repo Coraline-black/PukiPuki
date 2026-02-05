@@ -5,13 +5,13 @@ const leftArm = document.querySelector(".arm.left");
 const rightArm = document.querySelector(".arm.right");
 const talkBtn = document.getElementById("talkBtn");
 
-// Моргаем глазами каждые 2.6 сек
+// Моргаем глазами каждые 2.5 секунды
 setInterval(() => {
   eyes.forEach(e => e.style.height = "6px");
   setTimeout(() => eyes.forEach(e => e.style.height = "42px"), 180);
-}, 2600);
+}, 2500);
 
-// Жесты
+// Жесты: кивает да / мотает нет
 function yes() {
   head.style.transform = "rotate(6deg)";
   rightArm.style.transform = "rotate(25deg)";
@@ -34,41 +34,49 @@ function no() {
   }, 500);
 }
 
+// Имя пользователя
+let userName = localStorage.getItem("robotUserName");
+if (!userName) {
+  userName = prompt("Привет! Как тебя зовут?");
+  localStorage.setItem("robotUserName", userName);
+}
+
 // Память робота
 let memory = JSON.parse(localStorage.getItem("robotMemory") || "{}");
 function saveMemory() {
   localStorage.setItem("robotMemory", JSON.stringify(memory));
 }
 
-// Логика ИИ
-function think(text) {
+// Основная логика ИИ
+function respondAI(text) {
   text = text.toLowerCase();
 
-  // Примеры: 2+2
-  if(/\d+\s*[\+\-\*\/]\s*\d+/.test(text)) {
+  // Примеры
+  if (/\d+\s*[\+\-\*\/]\s*\d+/.test(text)) {
     try {
       const answer = eval(text);
       card.textContent = `Ответ: ${answer}`;
       yes();
       return;
-    } catch(e) {
+    } catch {
       card.textContent = "Ошибка в примере 😅";
       no();
       return;
     }
   }
 
-  // Если есть в памяти
-  if(memory[text]) {
-    card.textContent = memory[text];
-    memory[text].toLowerCase().includes("нет") ? no() : yes();
+  const key = text + "||" + userName;
+
+  if (memory[key]) {
+    card.textContent = memory[key];
+    memory[key].toLowerCase().includes("нет") ? no() : yes();
     return;
   }
 
-  // Если нет — спрашиваем у пользователя
+  // Если не знаем — спрашиваем, что ответить
   const answer = prompt(`Я не знаю, что ответить на "${text}". Что мне сказать?`);
-  if(answer) {
-    memory[text] = answer;
+  if (answer) {
+    memory[key] = answer;
     saveMemory();
     card.textContent = answer;
     answer.toLowerCase().includes("нет") ? no() : yes();
@@ -78,8 +86,31 @@ function think(text) {
   }
 }
 
-// Кнопка общения
+// Голосовой ввод
 talkBtn.onclick = () => {
-  const input = prompt("Напиши или скажи что-нибудь для робота:");
-  if(input) think(input);
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    card.textContent = "Твой браузер не поддерживает голос. Используй Safari!";
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = "ru-RU";
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  card.textContent = "🎧 Слушаю тебя…";
+
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
+    card.textContent = `Ты: "${transcript}" — Думаю... 💭`;
+    respondAI(transcript);
+  };
+
+  recognition.onerror = (event) => {
+    card.textContent = "Не удалось распознать голос. Попробуй еще раз!";
+  };
+
+  recognition.start();
 };
